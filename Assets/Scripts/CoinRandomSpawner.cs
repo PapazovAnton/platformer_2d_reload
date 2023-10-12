@@ -2,18 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CoinSpawnerController : MonoBehaviour
+public class CoinRandomSpawner : MonoBehaviour
 {
     private CoinSpawner[] _coinSpawners;
     private CoinSpawner _lastGeneratedSpawner;
 
-    void Start()
+    private void Start()
     {
         _coinSpawners = gameObject.GetComponentsInChildren<CoinSpawner>();
         CreateCoin();
     }
 
-    void Update()
+    private void Update()
     {
         CreateCoin();
     }
