@@ -1,12 +1,15 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(Rigidbody2D))]
 
 public class Player : MonoBehaviour
 {
+    [SerializeField] private UnityEvent _pickUpCoin;
+
     [SerializeField] private float _speed = 5f;
     [SerializeField] private float _minGroundNormalY = .65f;
     [SerializeField] private float _gravityModifier = 0.5f;
@@ -27,6 +30,12 @@ public class Player : MonoBehaviour
 
     private Animator _animator;
 
+    private int _speedHash;
+    private int _groundedHash;
+    private int _jumpHash;
+
+    private float _speedDivisionValue = 1.5f;
+
     private void OnEnable()
     {
         Rb2d = GetComponent<Rigidbody2D>();
@@ -36,6 +45,10 @@ public class Player : MonoBehaviour
     {
         _animator = GetComponent<Animator>();
 
+        _speedHash = Animator.StringToHash("Speed");
+        _groundedHash = Animator.StringToHash("Grounded");
+        _jumpHash = Animator.StringToHash("Jump");
+
         ContactFilter.useTriggers = false;
         ContactFilter.SetLayerMask(LayerMask);
         ContactFilter.useLayerMask = true;
@@ -43,14 +56,16 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
+
         float axisHorizontal = Input.GetAxis("Horizontal");
-        _animator.SetFloat("Speed", Math.Abs(axisHorizontal));
+
+        _animator.SetFloat(_speedHash, Math.Abs(axisHorizontal));
         TargetVelocity = new Vector2(axisHorizontal, 0);
 
         if (Input.GetKey(KeyCode.Space) && Grounded)
         {
-            _animator.SetBool("Grounded", false);
-            _animator.SetBool("Jump", true);
+            _animator.SetBool(_groundedHash, false);
+            _animator.SetBool(_jumpHash, true);
             Velocity.y = 5;
         }
 
@@ -81,7 +96,7 @@ public class Player : MonoBehaviour
 
     private void Movement(Vector2 move, bool yMovement)
     {
-        float speed = (yMovement) ? _speed / 1.5f : _speed; 
+        float speed = (yMovement) ? _speed / _speedDivisionValue : _speed; 
         float distance = move.magnitude * speed;
 
         if (distance > MinMoveDistance)
@@ -102,7 +117,7 @@ public class Player : MonoBehaviour
                 if (currentNormal.y > _minGroundNormalY)
                 {
                     Grounded = true;
-                    _animator.SetBool("Grounded", true);
+                    _animator.SetBool(_groundedHash, true);
 
                     if (yMovement)
                     {
@@ -130,7 +145,7 @@ public class Player : MonoBehaviour
     {
         if (collision.TryGetComponent(out Coin coin))
         {
-            coin.Destroy();
+            _pickUpCoin?.Invoke();
         }
     }
 }

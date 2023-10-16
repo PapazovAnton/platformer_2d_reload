@@ -5,7 +5,7 @@ using UnityEngine;
 public class CoinRandomSpawner : MonoBehaviour
 {
     private CoinSpawner[] _coinSpawners;
-    private CoinSpawner _lastGeneratedSpawner;
+    private int _lastGeneratedSpawnerKey = -1;
 
     private void Start()
     {
@@ -13,26 +13,21 @@ public class CoinRandomSpawner : MonoBehaviour
         CreateCoin();
     }
 
-    private void Update()
-    {
-        CreateCoin();
-    }
-
     public void CreateCoin()
     {
-        int keyRandomSpawner = Random.Range(0, _coinSpawners.Length);
-        CoinSpawner currentSpawner = _coinSpawners[keyRandomSpawner];
+        int keyRandomSpawner;
 
-        if (currentSpawner != _lastGeneratedSpawner && CoinOnStage() == false)
+        do
         {
-            _lastGeneratedSpawner = currentSpawner;
-            currentSpawner.CreateCoin();
+            keyRandomSpawner = Random.Range(0, _coinSpawners.Length);
         }
-    }
+        while (keyRandomSpawner == _lastGeneratedSpawnerKey);
 
-    private bool CoinOnStage()
-    {
-        Coin coin = GameObject.FindObjectOfType<Coin>();
-        return (coin == null) ? false : true;
+        Debug.Log(keyRandomSpawner);
+        Debug.Log(_lastGeneratedSpawnerKey);
+
+        _lastGeneratedSpawnerKey = keyRandomSpawner;
+        CoinSpawner currentSpawner = _coinSpawners[keyRandomSpawner];
+        currentSpawner.CreateCoin();
     }
 }

@@ -102,13 +102,13 @@ MonoBehaviour:
   _destroy:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6468169371639374669, guid: 6af72ab03f16c3e449732e31b8a9da21, type: 3}
-        m_TargetAssemblyTypeName: CoinSpawner, Assembly-CSharp
+      - m_Target: {fileID: 11500000, guid: 8d659de25cc7d954f814f9ae2e923980, type: 3}
+        m_TargetAssemblyTypeName: 
         m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
