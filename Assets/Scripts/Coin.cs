@@ -1,13 +1,13 @@
+using System;
 using UnityEngine;
-
+using UnityEngine.Events;
 
 public class Coin : MonoBehaviour
 {
-    private void OnTriggerEnter2D(Collider2D collision)
+    public event Action<Coin> Destory;
+
+    public void Destroy()
     {
-        if (collision.TryGetComponent(out Player player))
-        {
-            Destroy(gameObject);
-        }
+        Destory?.Invoke(this);
     }
 }

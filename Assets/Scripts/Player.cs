@@ -1,151 +1,61 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
-[RequireComponent(typeof(Animator))]
-[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(PlayerInput))]
+[RequireComponent(typeof(PlayerMover))]
+[RequireComponent(typeof(PlayerAnimator))]
+[RequireComponent(typeof(CheckCollision))]
 
 public class Player : MonoBehaviour
 {
-    [SerializeField] private UnityEvent _pickUpCoin;
+    private PlayerInput _playerInput;
+    private PlayerMover _playerMover;
+    private PlayerAnimator _playerAnimator;
+    private CheckCollision _checkCollision;
 
-    [SerializeField] private float _speed = 5f;
-    [SerializeField] private float _minGroundNormalY = .65f;
-    [SerializeField] private float _gravityModifier = 0.5f;
-
-    public Vector2 Velocity;
-    public LayerMask LayerMask;
-
-    protected Vector2 TargetVelocity;
-    protected bool Grounded;
-    protected Vector2 GroundNormal;
-    protected Rigidbody2D Rb2d;
-    protected ContactFilter2D ContactFilter;
-    protected RaycastHit2D[] HitBuffer = new RaycastHit2D[16];
-    protected List<RaycastHit2D> HitBufferList = new List<RaycastHit2D>(16);
-
-    protected const float MinMoveDistance = 0.01f;
-    protected const float ShellRadius = 0.01f;
-
-    private Animator _animator;
-
-    private int _speedHash;
-    private int _groundedHash;
-    private int _jumpHash;
-
-    private float _speedDivisionValue = 1.5f;
+    private float _horizontalDirection;
 
     private void OnEnable()
     {
-        Rb2d = GetComponent<Rigidbody2D>();
+        _playerMover.OnLanding += HandleLanding;
     }
 
-    private void Start()
+    private void OnDisable()
     {
-        _animator = GetComponent<Animator>();
+        _playerMover.OnLanding -= HandleLanding;
+    }
 
-        _speedHash = Animator.StringToHash("Speed");
-        _groundedHash = Animator.StringToHash("Grounded");
-        _jumpHash = Animator.StringToHash("Jump");
-
-        ContactFilter.useTriggers = false;
-        ContactFilter.SetLayerMask(LayerMask);
-        ContactFilter.useLayerMask = true;
+    private void Awake()
+    {
+        _playerInput = GetComponent<PlayerInput>();
+        _playerMover = GetComponent<PlayerMover>();
+        _playerAnimator = GetComponent<PlayerAnimator>();
+        _checkCollision = GetComponent<CheckCollision>();
     }
 
     private void Update()
     {
+        _horizontalDirection = _playerInput.HorizontalDirection;
 
-        float axisHorizontal = Input.GetAxis("Horizontal");
+        _playerAnimator.Run(_horizontalDirection);
 
-        _animator.SetFloat(_speedHash, Math.Abs(axisHorizontal));
-        TargetVelocity = new Vector2(axisHorizontal, 0);
+        _playerMover.SetView(_playerInput.ViewDirection);
 
-        if (Input.GetKey(KeyCode.Space) && Grounded)
-        {
-            _animator.SetBool(_groundedHash, false);
-            _animator.SetBool(_jumpHash, true);
-            Velocity.y = 5;
-        }
-
-        if (Input.GetKey(KeyCode.D))
-            transform.localScale = new Vector3(1, 1, 1);
-
-        if (Input.GetKey(KeyCode.A))
-            transform.localScale = new Vector3(-1, 1, 1);
+        if (_playerInput.TryJump)
+            _playerAnimator.Jump();
     }
 
     private void FixedUpdate()
     {
-        Velocity += _gravityModifier * Physics2D.gravity * Time.deltaTime;
-        Velocity.x = TargetVelocity.x;
+        _playerMover.Move(_horizontalDirection);
 
-        Grounded = false;
-
-        Vector2 deltaPosition = Velocity * Time.deltaTime;
-        Vector2 moveAlongGround = new Vector2(GroundNormal.y, -GroundNormal.x);
-        Vector2 move = moveAlongGround * deltaPosition.x;
-
-        Movement(move, false);
-
-        move = Vector2.up * deltaPosition.y;
-
-        Movement(move, true);
+        if (_playerInput.TryJump)
+            _playerMover.TryJump();
     }
 
-    private void Movement(Vector2 move, bool yMovement)
+    private void HandleLanding()
     {
-        float speed = (yMovement) ? _speed / _speedDivisionValue : _speed; 
-        float distance = move.magnitude * speed;
-
-        if (distance > MinMoveDistance)
-        {
-            int count = Rb2d.Cast(move, ContactFilter, HitBuffer, distance + ShellRadius);
-
-            HitBufferList.Clear();
-
-            for (int i = 0; i < count; i++)
-            {
-                HitBufferList.Add(HitBuffer[i]);
-            }
-
-            for (int i = 0; i < HitBufferList.Count; i++)
-            {
-                Vector2 currentNormal = HitBufferList[i].normal;
-
-                if (currentNormal.y > _minGroundNormalY)
-                {
-                    Grounded = true;
-                    _animator.SetBool(_groundedHash, true);
-
-                    if (yMovement)
-                    {
-                        GroundNormal = currentNormal;
-                        currentNormal.x = 0;
-                    } 
-                }
-
-                float projection = Vector2.Dot(Velocity, currentNormal);
-
-                if (projection < 0)
-                {
-                    Velocity = Velocity - projection * currentNormal;
-                }
-
-                float modifiedDistance = HitBufferList[i].distance - ShellRadius;
-                distance = modifiedDistance < distance ? modifiedDistance : distance;
-            }
-        }
-
-        Rb2d.position = Rb2d.position + move.normalized * distance;
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.TryGetComponent(out Coin coin))
-        {
-            _pickUpCoin?.Invoke();
-        }
+        _playerAnimator.Landing();
     }
 }

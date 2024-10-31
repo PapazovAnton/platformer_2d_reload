@@ -23,9 +23,6 @@ public class CoinRandomSpawner : MonoBehaviour
         }
         while (keyRandomSpawner == _lastGeneratedSpawnerKey);
 
-        Debug.Log(keyRandomSpawner);
-        Debug.Log(_lastGeneratedSpawnerKey);
-
         _lastGeneratedSpawnerKey = keyRandomSpawner;
         CoinSpawner currentSpawner = _coinSpawners[keyRandomSpawner];
         currentSpawner.CreateCoin();
